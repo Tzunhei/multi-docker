@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t tzunhei/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run tzunhei/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t tzunhei/multi-client ./client
+  - docker build -t tzunhei/multi-nginx ./nginx
+  - docker build -t tzunhei/multi-server ./server
+  - docker build -t tzunhei/multi-worker ./worker
+  # login in the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to docker hub
+  - docker push tzunhei/multi-client
+  - docker push tzunhei/multi-nginx
+  - docker push tzunhei/multi-server
+  - docker push tzunhei/multi-worker
